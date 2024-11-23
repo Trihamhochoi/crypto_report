@@ -9,8 +9,9 @@ import traceback
 import sys
 from openpyxl import load_workbook
 
+
 class CoinmarketcapAPI:
-    def __init__(self,file_env='.env'):
+    def __init__(self, file_env='.env'):
         load_dotenv(dotenv_path=file_env)
         self.auth_token = os.getenv('AUTH_KEY')
         self.base_url = os.getenv('BASE_URL')
@@ -21,7 +22,8 @@ class CoinmarketcapAPI:
             'X-CMC_PRO_API_KEY': os.getenv("AUTH_KEY"),
         }
         self.session.headers.update(headers)
-    def get_mapping_data(self,list_coin:list=['BTC','ETH']) -> pd.DataFrame:
+
+    def get_mapping_data(self, list_coin: list = ['BTC', 'ETH']) -> pd.DataFrame:
         url = f'{self.base_url}/v1/cryptocurrency/map'
         list_coin_str = ','.join([i.upper() for i in list_coin])
         parameters = {
@@ -57,17 +59,24 @@ class CoinmarketcapAPI:
             crypto_mapping = data['data']
             mapping_df = pd.json_normalize(data=crypto_mapping)
             mapping_df = mapping_df[mapping_df['rank'] <= 1000].reset_index(drop=True)
-            feat = ['id','rank','name','symbol','slug','is_active']
-            #mapping_df.to_csv(path_or_buf='./mapping_data.csv', index=False)
+            feat = ['id', 'rank', 'name', 'symbol', 'slug', 'is_active']
+            # mapping_df.to_csv(path_or_buf='./mapping_data.csv', index=False)
             print(mapping_df[feat].to_string())
             return mapping_df[feat]
 
     # Get listing price data
     def get_market_data(self,
-                        list_coin:list=['BTC','ETH'],
-                        start:int=1,
-                        limit:int=100,
-                        destination_excel_path:str='Data/The-Jungle.xlsx')-> pd.DataFrame:
+                        list_coin: list = ['BTC', 'ETH'],
+                        start: int = 1,
+                        limit: int = 100,
+                        destination_excel_path: str = 'Data/The-Jungle.xlsx') -> pd.DataFrame:
+        """
+
+        :param destination_excel_path:
+        :param limit:
+        :param start:
+        :type list_coin: object
+        """
         # Get ID of cryptocurrency symbol
         df_symbol = self.get_mapping_data(list_coin)
         # get ID:
@@ -108,7 +117,7 @@ class CoinmarketcapAPI:
 
             # Transform to dataframe
             price_df = pd.json_normalize(data=data_final).drop(columns='tags')
-            feat = ['cmc_rank','id','name','symbol','date_added','circulating_supply','last_updated','quote.USD.price']
+            feat = ['cmc_rank', 'id', 'name', 'symbol', 'date_added', 'circulating_supply', 'last_updated', 'quote.USD.price']
             print(price_df[feat].to_string())
 
             # Create excel writer
@@ -119,7 +128,7 @@ class CoinmarketcapAPI:
             # pprint(writer.sheets)
 
             # Save cmc price to existed excel file
-            with pd.ExcelWriter(path=destination_excel_path, engine='openpyxl', mode='a',if_sheet_exists='replace') as writer:
+            with pd.ExcelWriter(path=destination_excel_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
                 price_df[feat].to_excel(excel_writer=writer,
                                         sheet_name='CMC_price',
                                         index=False,
@@ -128,10 +137,10 @@ class CoinmarketcapAPI:
 
 
 if __name__ == '__main__':
-    list_coin = ['BTC', 'ETH', 'near', 'jup', 'sol','dogs','wld']
+    ls_coin = ['BTC', 'ETH', 'near', 'jup', 'sol', 'dogs', 'wld']
     dest_path = 'Data/The-Jungle-test.xlsx'
 
     # CMC API
     cmc = CoinmarketcapAPI()
     #df_mapping = cmc.get_mapping_data(list_coin=['BTC','ETH','near','jup','sol'])
-    df_price = cmc.get_market_data(list_coin,destination_excel_path=dest_path)
+    df_price = cmc.get_market_data(ls_coin, destination_excel_path=dest_path)
